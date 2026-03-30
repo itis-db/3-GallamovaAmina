@@ -1,0 +1,15 @@
+CREATE FUNCTION books_search_vector_update() RETURNS trigger AS $$
+BEGIN
+    NEW.search_vector :=
+        to_tsvector('russian', NEW.title || ' ' || NEW.description);
+    RETURN NEW;
+END
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER tsvector_update
+BEFORE INSERT OR UPDATE ON books
+FOR EACH ROW EXECUTE FUNCTION books_search_vector_update();
+UPDATE books
+SET search_vector =
+    to_tsvector('russian', title || ' ' || description);
+CREATE INDEX idx_books_search_vector
+ON books USING GIN(search_vector);
